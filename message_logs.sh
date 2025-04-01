@@ -33,19 +33,29 @@ pass_by_message(){ # MESSAGES BLOCKS INDEX STEPS
 	local BLOCKS=$2
 	local INDEX=$3
 	local STEPS=$4
+	local MAX_INDEX=0
+
+	if [[ $BLOCKS -gt ${#MESSAGE} ]];then
+		MAX_INDEX=$BLOCKS
+	else
+		MAX_INDEX=${#MESSAGE}
+	fi
 
 	if [[ $STEPS -lt 0 ]];then
 		MESSAGE=$(echo $MESSAGE | rev)
 	fi
-	local INDEX=$(($INDEX%$BLOCKS))
+	local INDEX=$(($INDEX%$MAX_INDEX))
 	
 	for I in `seq $BLOCKS`;do
 		if [[ $INDEX -lt ${#MESSAGE} ]];then
 			echo -n ${MESSAGE:$INDEX:1}
+			if [[ $(printf "%d" \'${MESSAGE:$INDEX:1}) = 0 ]];then
+				echo -n " ";
+			fi
 		else
 			echo -n " "
 		fi
-		INDEX=$((($INDEX+$STEPS)%$BLOCKS))
+		INDEX=$((($INDEX+$STEPS)%$MAX_INDEX))
 
 		if [[ $INDEX -lt 0 ]];then
 			INDEX=$BLOCKS
