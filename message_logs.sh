@@ -4,7 +4,7 @@ get_stop(){
 	echo "stop"$(date +"%s%N")".stop"
 }
 
-line(){
+line(){ # OPERATIONS TOT_OPERATIONS BLOCKS 
 	local OPERATIONS=$1
 	local TOT_OPERATIONS=$2
 	local BLOCKS=$3
@@ -52,42 +52,3 @@ pass_by_message(){ # MESSAGES BLOCKS INDEX STEPS
 		fi
 	done
 }
-
-pass_multiple_messages(){
-	local -n ARRAY_STR=$1
-	local INDEX_ITR=$2
-	local INDEX_STR=$(($3%${#ARRAY_STR[@]}))
-
-	local BLOCKS=$4
-	local DISTANCE=$5
-
-	local TOT_WALKED=0
-	local CURR_STR=${ARRAY_STR[0]}
-	while [[ $TOT_WALKED -lt $BLOCKS ]];do
-		if [[ $INDEX_STR -lt 0 ]];then
-			printf " "
-			TOT_WALKED=$(($TOT_WALKED+1))
-			INDEX_STR=$(($INDEX_STR+1))
-		else
-			LENGTH=${#CURR_STR}
-			if [[ $LENGTH -gt $(($BLOCKS-$LENGTH)) ]];then
-				LENGTH=$(($BLOCKS-$LENGTH));
-			fi
-			pass_by_message $CURR_STR $LENGTH $INDEX_STR 1
-			INDEX_ITR=$((($INDEX_ITR+1)%${#ARRAY_STR[*]}))
-			#echo -n ${ARRAY_STR[*]}
-			INDEX_STR=$((0-$DISTANCE))
-
-			CURR_STR=${ARRAY_STR[$INDEX_ITR]}
-			TOT_WALKED=$(($TOT_WALKED+$LENGTH))
-		fi
-	done
-}
-
-TST=("capa" "opa" "epa")
-for J in `seq 20`;do
-	echo -ne "\r"
-	pass_multiple_messages TST 0 J 20 3
-	sleep 0.1
-done
-echo
