@@ -8,7 +8,7 @@ line(){ # OPERATIONS TOT_OPERATIONS BLOCKS
 	local OPERATIONS=$1
 	local TOT_OPERATIONS=$2
 	local BLOCKS=$3
-	local PORCENT_BLOCKS=$(awk "BEGIN {print $OPERATIONS/$TOT_OPERATIONS*$BLOCKS}")
+	local PORCENT_BLOCKS=$(printf %.0f $(awk "BEGIN {print $OPERATIONS/$TOT_OPERATIONS*$BLOCKS}"))
 
 	local FILL_WITH="="
 	local END_WITH=">"
@@ -28,7 +28,7 @@ line(){ # OPERATIONS TOT_OPERATIONS BLOCKS
 	done
 	printf $CLOSE_WITH
 }
-pass_by_message(){ # MESSAGES BLOCKS INDEX STEPS
+pass_by_message(){ # MESSAGE BLOCKS INDEX STEPS
 	local MESSAGE=$1
 	local BLOCKS=$2
 	local INDEX=$3
