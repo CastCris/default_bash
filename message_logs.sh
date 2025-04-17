@@ -3,6 +3,9 @@
 get_stop(){
 	echo "stop"$(date +"%s%N")".stop"
 }
+get_start(){
+	echo "start"$(date +"%s%N")".start"
+}
 
 line(){ # OPERATIONS TOT_OPERATIONS BLOCKS 
 	local OPERATIONS=$1
