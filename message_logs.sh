@@ -65,3 +65,87 @@ pass_by_message(){ # MESSAGE BLOCKS INDEX STEPS
 		fi
 	done
 }
+fill_line_with(){ # STR SAMPLE_MESSAGE MESSAGE
+	local CHAR=$1
+	local SAMPLE_MESSAGE=$2
+	local MESSAGE=$3
+	local LEN_FILL=$(tput cols)
+
+	if [[ ${#SAMPLE_MESSAGE} -ne 0 ]];then
+		LEN_FILL=$((($LEN_FILL-${#SAMPLE_MESSAGE})/2))
+	fi
+	if [[ ${#MESSAGE} = 0 ]];then
+		MESSAGE=$SAMPLE_MESSAGE
+	fi
+	local INDEX=0
+	for i in `seq $LEN_FILL`;do
+		echo -n "$CHAR"
+		INDEX=$(($INDEX+1))
+	done
+	if [[ $INDEX = $(tput cols) ]];then
+		return
+	fi
+	echo -ne $MESSAGE
+	for i in `seq $LEN_FILL`;do
+		echo -n "$CHAR"
+	done
+	if [[ $((($(tput cols)-${#SAMPLE_MESSAGE})%2)) = 1 ]];then
+		echo -n $CHAR
+	fi
+}
+justify_line(){ # SAMPLE_WORDS FILLING WORDS
+	SAMPLE_WORDS=$1
+	FILLING=$2
+	if [[ ${#FILLING} = 0 ]];then
+		FILLING=" "
+	fi
+	WORDS=$3
+	if [[ ${#WORDS} = 0 ]];then
+		WORDS=$SAMPLE_WORDS
+	fi
+
+	ARRAY=()
+	AMOUNT_WORDS=0
+	LEN_ALL_WORDS=0
+	for I in $SAMPLE_WORDS;do
+		LEN_ALL_WORDS=$(($LEN_ALL_WORDS+${#I}))
+		AMOUNT_WORDS=$(($AMOUNT_WORDS+1))
+		ARRAY+=($I)
+	done
+	if [[ $AMOUNT_WORDS = 1 ]];then
+		ARRAY[1]=""
+		AMOUNT_WORDS=2
+	fi
+	LEN_ALL_WORDS=$(($LEN_ALL_WORDS-${#ARRAY[0]}-${#ARRAY[-1]}))
+	NUM_SPACE=$(awk "BEGIN {print (($(tput cols)-${#ARRAY[0]}-${#ARRAY[-1]}-1))}")
+	NUM_SPACE=$(awk "BEGIN {print ((($NUM_SPACE-$LEN_ALL_WORDS)/($AMOUNT_WORDS-1)))}")
+	NUM_SPACE=${NUM_SPACE%%.*}
+	SPACES=""
+	for I in `seq $NUM_SPACE`;do
+		SPACES="${SPACES}$FILLING"
+	done
+	NEW_ARRAY=()
+	for I in $WORDS;do
+		NEW_ARRAY+=($I)
+	done
+	echo -ne ${NEW_ARRAY[0]}
+	INDEX=1
+	MOMENT=0
+	while [[ $INDEX -lt $((${#ARRAY[@]}-1)) ]];do
+		if [[ $MOMENT = 0 ]];then # For spaces
+			echo -n "$SPACES"
+		elif [[ $MOMENT = 1 ]];then # For words
+			echo -ne ${NEW_ARRAY[$INDEX]}
+			INDEX=$(($INDEX+1))
+		fi
+		MOMENT=$((($MOMENT+1)%2))
+	done 
+
+	REMAIN_SPACE=$(($(tput cols)-$NUM_SPACE*$INDEX-${#ARRAY[-1]}-${#ARRAY[0]}-$LEN_ALL_WORDS))
+	if [[ $REMAIN_SPACE -ne 0 ]];then
+		for I in `seq $REMAIN_SPACE`;do
+			echo -n "$FILLING"
+		done
+	fi
+	echo -ne "$SPACES${NEW_ARRAY[-1]}" 
+}
