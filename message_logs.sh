@@ -86,7 +86,7 @@ fill_line_with(){ # STR SAMPLE_MESSAGE MESSAGE
 		return
 	fi
 	echo -ne $MESSAGE
-	for i in `seq $LEN_FILL`;do
+	for I in `seq $LEN_FILL`;do
 		echo -n "$CHAR"
 	done
 	if [[ $((($(tput cols)-${#SAMPLE_MESSAGE})%2)) = 1 ]];then
@@ -148,4 +148,35 @@ justify_line(){ # SAMPLE_WORDS FILLING WORDS
 		done
 	fi
 	echo -ne "$SPACES${NEW_ARRAY[-1]}" 
+}
+interpret_options(){
+	options_str="$1"
+	str="$2"
+
+	format_options=()
+	for i in $options_str;do
+		format_options+=("\\")
+	done
+
+	revise=0
+	index=0
+	for i in $str;do
+		revise=$(($revise%2))
+		if [[ $revise = 0 ]];then
+			for j in $options_str;do
+				if [[ "${j}" = "${i}" ]];then
+					break;
+				fi
+				index=$(($index+1))
+			done
+			revise=$(($revise+1))
+			continue
+		fi
+		#
+		format_options[$index]=$i
+		index=0
+		revise=$(($revise+1))
+	done
+	echo ${format_options[@]}
+
 }
