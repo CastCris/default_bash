@@ -1,22 +1,26 @@
 #!/bin/bash
 interpret_options(){
-	options_curr=($1)
-	options_user=($2)
+	local options_curr=($1)
+	local options_user=($2)
+	local delimiter=$3
+	if [[ ${#delimiter} -eq 0 ]];then
+		delimiter="="
+	fi
 
 	declare -A options
-	index=0
+	local index=0
 	while [[ $index -lt ${#options_curr[@]} ]] && [[ $index -lt ${#options_user[@]} ]];do
-		option_syst=${options_curr[$index]%%=*}
-		value_syst=${options_curr[$index]##*=}
+		local option_syst=${options_curr[$index]%%${delimiter}*}
+		local value_syst=${options_curr[$index]#*${delimiter}}
 		if [[ $value_syst = $option_syst ]];then
 			value_syst="0"
 		fi
-		if [[ ${options[$option_syst]} -eq 0 ]];then
+		if [[ ${#options[$option_syst]} -eq 0 ]];then
 			options[$option_syst]=$value_syst
 		fi
 		#
-		option_user=${options_user[$index]%%=*}
-		value_user=${options_user[$index]##*=}
+		local option_user=${options_user[$index]%%${delimiter}*}
+		local value_user=${options_user[$index]#*${delimiter}}
 		if [[ $value_user = $option_user ]];then
 			value_user="1"
 		fi
@@ -25,8 +29,8 @@ interpret_options(){
 		index=$(($index+1))
 	done
 	while [[ $index -lt ${#options_curr[@]} ]];do
-		options_temp=${options_curr[$index]%%=*}
-		value_temp=${options_curr[$index]##*=}
+		local options_temp=${options_curr[$index]%%${delimiter}*}
+		local value_temp=${options_curr[$index]#*${delimiter}}
 		if [[ $value_temp = $options_temp ]];then
 			value_temp="0"
 		fi
@@ -37,8 +41,8 @@ interpret_options(){
 		index=$(($index+1))
 	done
 	while [[ $index -lt ${#options_user[@]} ]];do
-		options_temp=${options_user[$index]%%=*}
-		value_temp=${options_user[$index]##*=}
+		local options_temp=${options_user[$index]%%${delimiter}*}
+		local value_temp=${options_user[$index]#*${delimiter}}
 		if [[ $value_temp = $options_temp ]];then
 			value_temp="1"
 		fi
@@ -47,8 +51,8 @@ interpret_options(){
 		index=$(($index+1))
 	done
 
-	echo ${!options[@]}
-	echo ${options[@]}
+	for i in ${options_curr[@]};do
+		local option_temp=${i%%${delimiter}*}
+		echo -n "${options[$option_temp]} "
+	done 
 }
-
-interpret_options "-msg=opa\\como\\vai\\baby? -i=10 -b" "-i=5 -msg=sexo\\sonho\\paixao -b -steps=10"
