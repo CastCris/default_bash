@@ -2,10 +2,10 @@
 source $(find . -type f -name interpret_line.sh)
 
 get_stop(){
-	echo "stop"$(date +"%s%n")".stop"
+	echo "stop"$(date +"%s%N")".stop"
 }
 get_start(){
-	echo "start"$(date +"%s%n")".start"
+	echo "start"$(date +"%s%N")".start"
 }
 
 line(){ # -o: Operations | -to : Tot operations | -b : Blocks | -fb: Fill blocks | -fs : Fill spaces | -arrow : Arrow for line
@@ -43,6 +43,9 @@ line(){ # -o: Operations | -to : Tot operations | -b : Blocks | -fb: Fill blocks
 split_str(){ # -str : String wish | -del : Delimiter | -rep : Replace the substrings by other substring
 	local options='-str=put\\s\where\\yout\\str -del=\\ -rep'
 	local user_options="$@"
+	if [[ ${#user_options} -eq 0 ]];then
+		echo "The split_str don't receive parameters..."
+	fi
 	local values=($(interpret_options "$options" "$user_options"))
 
 	local str="${values[0]}"

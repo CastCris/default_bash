@@ -1,5 +1,5 @@
 #!/bin/bash
-interpret_options(){
+interpret_options(){ # options_curr options_user delimiter 
 	local options_curr=($1)
 	local options_user=($2)
 	local delimiter=$3

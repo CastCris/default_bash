@@ -1,22 +1,6 @@
 #!/bin/bash
-source $(find . -type f -name message_logs.sh)
+source $(find . -type f -name interpret_line.sh)
 
-OPTIONS_CLI="-n -p -l -develop -sources -is_main -src_sh -src_c_dir -src_h_dir -src_o_dir"
-: '
--n: 		name project
--p: 		path for project
--l:			language for project ( only c now...)
-
--develop: 	rename the develop dir
--sources: 	rename the sources dir
--is_main: 	rename the main file dir
-
--src_sh: 	rename the source sh dir
-
--src_c_dir	rename the source .c file dir
--src_h_dir 	reamne the source heads files dir
--src_o_dir 	rename the source object from .c files dir 
-'
 # Name directories for main dirs project
 DEVELOP_DIR_NAME="develop"
 SOURCES_DIR_NAME="sources"
@@ -80,34 +64,40 @@ OUT_FILE_MAIN="application"'
 
 }
 
-STANDARD_OPTIONS=("my_project" "." "c" $DEVELOP_DIR_NAME $SOURCES_DIR_NAME $FILE_MAIN_DIR_NAME $SRC_SH $SRC_C_DIR $SRC_H_DIR $SRC_O_DIR)
+STANDARD_VALUES="-n=my_project -p=. -l=c -develop=$DEVELOP_DIR_NAME -sources=$SOURCES_DIR_NAME -is_main=$FILE_MAIN_DIR_NAME -src_sh=$SRC_SH -src_c_dir=$SRC_C_DIR -src_h_dir=$SRC_H_DIR -src_o_dir=$SRC_O_DIR"
+: '
+-n: 		name project
+-p: 		path for project
+-l:			language for project ( only c now...)
+
+-develop: 	rename the develop dir
+-sources: 	rename the sources dir
+-is_main: 	rename the main file dir
+
+-src_sh: 	rename the source sh dir
+
+-src_c_dir	rename the source .c file dir
+-src_h_dir 	reamne the source heads files dir
+-src_o_dir 	rename the source object from .c files dir 
+'
+
 main_init_project(){
-	user_options="$@"
-	temp_options=()
-	for i in $(interpret_options "$OPTIONS_CLI" "$user_options");do
-		temp_options+=($i)
-	done
-	for i in ${!temp_options[@]};do
-		if [[ ${#temp_options[$i]} -ne 1 ]];then
-			echo $i ${temp_options[$i]}
-			STANDARD_OPTIONS[$i]=${temp_options[$i]}
-		fi
-	done
-	echo ${STANDARD_OPTIONS[@]}
+	local user_options="$@"
+	STANDARD_VALUES=($(interpret_options "$STANDARD_VALUES" "$user_options"))
 	#
-	project_name=${STANDARD_OPTIONS[0]}
-	project_path=${STANDARD_OPTIONS[1]}
-	language=${STANDARD_OPTIONS[2]}
+	project_name=${STANDARD_VALUES[0]}
+	project_path=${STANDARD_VALUES[1]}
+	language=${STANDARD_VALUES[2]}
 
-	DEVELOP_DIR_NAME=${STANDARD_OPTIONS[3]}
-	SOURCES_DIR_NAME=${STANDARD_OPTIONS[4]}
-	FILE_MAIN_DIR_NAME=${STANDARD_OPTIONS[5]}
+	DEVELOP_DIR_NAME=${STANDARD_VALUES[3]}
+	SOURCES_DIR_NAME=${STANDARD_VALUES[4]}
+	FILE_MAIN_DIR_NAME=${STANDARD_VALUES[5]}
 
-	SRC_SH=${STANDARD_OPTIONS[6]}
+	SRC_SH=${STANDARD_VALUES[6]}
 
-	SRC_C_DIR=${STANDARD_OPTIONS[7]}
-	SRC_H_DIR=${STANDARD_OPTIONS[8]}
-	SRC_O_DIR=${STANDARD_OPTIONS[9]}
+	SRC_C_DIR=${STANDARD_VALUES[7]}
+	SRC_H_DIR=${STANDARD_VALUES[8]}
+	SRC_O_DIR=${STANDARD_VALUES[9]}
 	#
 
 	dir_main=${project_path}/${project_name}
@@ -136,6 +126,6 @@ main_init_project(){
 		fi
 	done
 	#
-	mount_sources_file ${STANDARD_OPTIONS[@]}
+	mount_sources_file ${STANDARD_VALUES[@]}
 }
 main_init_project "$@"
