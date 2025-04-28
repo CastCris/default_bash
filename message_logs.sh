@@ -222,4 +222,3 @@ justify_line(){ # -smsg : A message sample | -msg : The real message | -fs : The
 	fi
 	echo -ne "$spaces${new_array[-1]}" 
 }
-
