@@ -13,7 +13,7 @@ check_able_language(){ # language
 	done
 	echo "0"
 }
-mount_language_files(){ # languages
+mount_build_files(){ # languages
 	local languages=$LANGUAGES
 	languages=($(split_str "-str=$languages -del=,"))
 	#
@@ -29,12 +29,17 @@ mount_language_files(){ # languages
 			mkdir -p $path_build
 		fi
 		#
-		cp $(echo "$(find ./for_init_project -type d -name $dir_build)/*")  $path_build
+		cp $(echo "$(find ./for_init_project -type d -name $dir_build)/*.sh")  $path_build
 	done
 }
+mount_maintenance(){
+	mv $(echo "$(find ./for_init_project -type d -name $REPAIR_DIR)/*.sh") $PATH_REPAIR
+}
 mount_sh_dir(){
-	cp $(find . -maxdepth 1 -type f | grep -P '('$IMPORT_FILES_SH')$') $PATH_IMPORT_SH
-	mount_language_files
+	cp $(find . -type f | grep -P '('$IMPORT_FILES_SH')$') $PATH_IMPORT_SH
+	mount_build_files
+	mount_maintenance 
+	STANDARD_VALUES[1]="-"
 	mksrc "${STANDARD_VALUES[@]}"
 	mv sources.sh $PATH_SRC_SH
 }
@@ -51,7 +56,7 @@ FILE_MAIN_DIR_NAME="is_main"
 SRC_SH="for_bash"
 IMPORT_SH="import_shell"
 # for repair the project
-REPAIR_SH="maintenance"
+REPAIR_DIR="maintenance"
 
 # for programming
 SRC_SCRIPT_DIR="src_scripts"
@@ -67,7 +72,7 @@ ABLE_LANGUAGES=("c")
 # Files sh for import
 IMPORT_FILES_SH='path_files\.sh|message_logs\.sh|interpret_line\.sh'
 # Standard attribute for project
-STANDARD_OPTIONS="-n=$PROJECT_NAME -p=$PROJECT_PATH -l=c -develop=$DEVELOP_DIR_NAME -sources=$SOURCES_DIR_NAME -is_main=$FILE_MAIN_DIR_NAME -src_sh=$SRC_SH -import_sh=$IMPORT_SH -src_s_dir=$SRC_SCRIPT_DIR -src_m_dir=$SRC_MODULE_DIR -src_o_dir=$SRC_OBJECT_DIR -o"
+STANDARD_OPTIONS="-n=$PROJECT_NAME -p=$PROJECT_PATH -l=c -develop=$DEVELOP_DIR_NAME -sources=$SOURCES_DIR_NAME -is_main=$FILE_MAIN_DIR_NAME -src_sh=$SRC_SH -import_sh=$IMPORT_SH -maintenance=$REPAIR_DIR -src_s_dir=$SRC_SCRIPT_DIR -src_m_dir=$SRC_MODULE_DIR -src_o_dir=$SRC_OBJECT_DIR -o"
 STANDARD_VALUES=($(interpret_options "$STANDARD_OPTIONS"))
 : '
 -n: 		name project
@@ -99,10 +104,11 @@ main_init_project(){
 
 	SRC_SH=${STANDARD_VALUES[6]}
 	IMPORT_SH=${STANDARD_VALUES[7]}
+	REPAIR_DIR=${STANDARD_VALUES[8]}
 
-	SRC_SCRIPT_DIR=${STANDARD_VALUES[8]}
-	SRC_MODULE_DIR=${STANDARD_VALUES[9]}
-	SRC_OBJECT_DIR=${STANDARD_VALUES[10]}
+	SRC_SCRIPT_DIR=${STANDARD_VALUES[9]}
+	SRC_MODULE_DIR=${STANDARD_VALUES[10]}
+	SRC_OBJECT_DIR=${STANDARD_VALUES[11]}
 
 	OUTPUT=${STANDARD_VALUES[$((${#STANDARD_VALUES[@]}-1))]}
 	#
@@ -112,13 +118,12 @@ main_init_project(){
 
 	PATH_SRC_SH=${PATH_DEVELOP}/${SRC_SH}
 	PATH_IMPORT_SH=${PATH_SRC_SH}/${IMPORT_SH}
-	PATH_REPAIR=${PATH_SRC_SH}/${REPAIR_SH}
+	PATH_REPAIR=${PATH_SRC_SH}/${REPAIR_DIR}
 	#
 	PATH_SOURCE=${PATH_MAIN}/${SOURCES_DIR_NAME}
 	PATH_SCRIPT=${PATH_SOURCE}/${SRC_SCRIPT_DIR}
 	PATH_MODULE=${PATH_SOURCE}/${SRC_MODULE_DIR}
 	PATH_OBJECT=${PATH_SOURCE}/${SRC_OBJECT_DIR}
-
 	#
 	order_to_build=($PATH_MAIN $PATH_DEVELOP $PATH_MAIN_FILE $PATH_SRC_SH $PATH_IMPORT_SH $PATH_REPAIR $PATH_SOURCE $PATH_SCRIPT $PATH_MODULE $PATH_OBJECT)
 	for i in ${order_to_build[@]};do
