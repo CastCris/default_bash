@@ -1,7 +1,10 @@
 #!/bin/bash
-source $(find . -type f -name interpret_line.sh)
-source $(find . -type f -name message_logs.sh)
-source $(find . -type f -name mksource.sh)
+source $(find . -type f -name import.sh)
+
+import_file "interpret_line.sh"
+import_file "message_logs.sh"
+import_file "path_files.sh"
+import_file "mksource.sh"
 
 check_able_language(){ # language
 	local language=$1
@@ -39,9 +42,12 @@ mount_sh_dir(){
 	cp $(find . -type f | grep -P '('$IMPORT_FILES_SH')$') $PATH_IMPORT_SH
 	mount_build_files
 	mount_maintenance 
-	STANDARD_VALUES[1]="-"
+
+	STANDARD_VALUES[1]="#"
 	mksrc "${STANDARD_VALUES[@]}"
+
 	mv sources.sh $PATH_SRC_SH
+	put_path_src "$PATH_SRC_SH" "$IMPORT_SH|$SRC_SH"
 }
 
 # Global variables
@@ -70,7 +76,7 @@ C_FLAGS="-Wall -Wextra -O2 -std=c99"
 # Languages able
 ABLE_LANGUAGES=("c")
 # Files sh for import
-IMPORT_FILES_SH='path_files\.sh|message_logs\.sh|interpret_line\.sh'
+IMPORT_FILES_SH='path_files\.sh|message_logs\.sh|interpret_line\.sh|import\.sh|import_src\.sh'
 # Standard attribute for project
 STANDARD_OPTIONS="-n=$PROJECT_NAME -p=$PROJECT_PATH -l=c -develop=$DEVELOP_DIR_NAME -sources=$SOURCES_DIR_NAME -is_main=$FILE_MAIN_DIR_NAME -src_sh=$SRC_SH -import_sh=$IMPORT_SH -maintenance=$REPAIR_DIR -src_s_dir=$SRC_SCRIPT_DIR -src_m_dir=$SRC_MODULE_DIR -src_o_dir=$SRC_OBJECT_DIR -o"
 STANDARD_VALUES=($(interpret_options "$STANDARD_OPTIONS"))

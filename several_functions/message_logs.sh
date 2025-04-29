@@ -1,5 +1,6 @@
 #!/bin/bash
-source $(find . -type f -name interpret_line.sh)
+source $(find . -type f -name import.sh)
+import_file "interpret_line.sh"
 
 get_stop(){
 	echo "stop"$(date +"%s%N")".stop"

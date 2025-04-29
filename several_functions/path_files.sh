@@ -1,8 +1,9 @@
 #!/bin/bash
-source $(find -type f -name interpret_line.sh)
+source $(find . -type f -name import.sh)
+import_file "interpret_line.sh"
 
 relative_path(){ # -init : The point from start | -end : The point from destiny | -dir_start : The path directory where is the point start | -dir_end : The path_direcoty where if the point end
-	local standard_values="-init=. -end=home -dir_start=/home/$USER -dir_end=/home/$USER"
+	local standard_values="-init=. -end=home -dir_start=/home/$USER -dir_end=home"
 	local user_input="$@"
 	local values=($(interpret_options "$standard_values" "$user_input"))
 
@@ -20,8 +21,9 @@ relative_path(){ # -init : The point from start | -end : The point from destiny 
 	local dir_init=${values[2]}
 	local dir_end=${values[3]}
 
-	local path_init="$(find $dir_init -name $init 2>/dev/null)/"
-	local path_end="$(find $dir_end -name $end 2>/dev/null)/"
+	local path_init="`dirname $(find $dir_init -name $init 2>/dev/null)/`"
+	local path_end="`dirname $(find $dir_end -name $end 2>/dev/null)/`"
+
 
 	local path_smallest=${path_init}
 	local path_biggest=${path_end}
@@ -36,9 +38,9 @@ relative_path(){ # -init : The point from start | -end : The point from destiny 
 		if [[ ${path_smallest%%/*} != ${path_biggest%%/*} ]];then
 			break
 		fi
+		path_commum=${path_smallest%%/*}
 		path_smallest=${path_smallest#*/}
 		path_biggest=${path_biggest#*/}
-		path_commum=${path_smallest%%/*}
 	done
 
 	local copy_path_init=${path_init%%/}
@@ -58,5 +60,3 @@ relative_path(){ # -init : The point from start | -end : The point from destiny 
 
 	echo ".$relative_path"
 }
-
-relative_path "-init=. -end=/ -dir_start=/home/chincaro/Documents/codes/new_Enigma "
