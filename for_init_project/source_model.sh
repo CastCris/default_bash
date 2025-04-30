@@ -1,4 +1,3 @@
-#!/bin/bash
 get_path(){
 	local path=""
 	local path_pwd="`pwd`/"

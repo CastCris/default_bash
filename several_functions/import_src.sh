@@ -6,7 +6,7 @@ import_file(){
 	define='echo $'$new_var''
 	if [ -z "`eval $define`" ];then
 		eval "$new_var=1"
-		echo $(find . -type f -name $file)
+		# echo $(find . -type f -name $file)
 		source $(find . -type f -name $file)
 	fi
 }

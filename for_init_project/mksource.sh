@@ -3,7 +3,19 @@
 mksrc(){ # values index
 	local values=("$@")
 	local index=0
-	rm -f sources.sh
+	echo "# sources.sh" > sources.sh
+	echo 'source $(find -type f -name import.sh)' >> sources.sh
+
+	local file_sh_imported=($(echo "$PATH_IMPORT_SH/*.sh"))
+	for i in ${file_sh_imported[@]};do
+		if [[ ${i##*/} = "import.sh" ]] || [[ ${i##*/} = "import_src.sh" ]];then
+			continue;
+		fi
+		local relative_path_file="source \"$(relative_path "-init=${i%/*} -end=${i##*/} -dir_start=${PATH_SRC_SH} -dir_end=${i%/*}")${i##*/}\""
+		echo "$relative_path_file" >> sources.sh
+	done  
+	echo "">>sources.sh
+
 	while IFS= read -r line;do
 		local format_line="$line"
 		local temp=${line##*=}
@@ -32,14 +44,14 @@ put_path_src(){
 
 		local relative_path_temp=$(relative_path "-end=sources.sh -init=${file_sh[0]##*/} -dir_end=$PATH_SRC_SH -dir_start=${file_sh[0]}")
 		relative_path_temp="${relative_path_temp}sources.sh"
-		echo $relative_path_temp
+		# echo $relative_path_temp
 
 		local relative_path=""
 		for i in `echo $relative_path_temp | tr "/" "\n"`;do
 			relative_path=${relative_path}'\/'$i
 		done
 		relative_path=${relative_path:2:${#relative_path}}
-		echo $relative_path
+		# echo $relative_path
 		for j in ${file_sh[@]};do
 			sed -i '2s/^/source '$relative_path'\n/' $j
 		done

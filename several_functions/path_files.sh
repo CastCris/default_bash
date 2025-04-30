@@ -21,9 +21,8 @@ relative_path(){ # -init : The point from start | -end : The point from destiny 
 	local dir_init=${values[2]}
 	local dir_end=${values[3]}
 
-	local path_init="`dirname $(find $dir_init -name $init 2>/dev/null)/`"
-	local path_end="`dirname $(find $dir_end -name $end 2>/dev/null)/`"
-
+	local path_init="`dirname $(find $dir_init -name ${init##*/} 2>/dev/null)/`"
+	local path_end="`dirname $(find $dir_end -name ${end##*/} 2>/dev/null)/`"
 
 	local path_smallest=${path_init}
 	local path_biggest=${path_end}
