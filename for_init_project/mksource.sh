@@ -44,7 +44,7 @@ mksrc(){ # values options
 	local arguments="# Options used for construct of project.Don't do anything unless you know what is doing\n $(make_src_options "$(printf "%s " ${values[@]} )" "$(printf "%s " ${options[@]} )")"
 	echo -e $arguments > ${PATH_REPAIR}/arguments.txt
 	
-	echo -e "\e[34m$(cat $(find -type f -name "sources.sh"))\e[0m"
+	echo -e "\e[34m$(cat $(find -type f -name "sources.sh" | head -n 1))\e[0m"
 }
 
 put_path_src(){
@@ -60,14 +60,14 @@ put_path_src(){
 
 		local relative_path_src=$(relative_path "-end=sources.sh -init=${file_sh[0]##*/} -dir_end=$PATH_SRC_SH -dir_start=${file_sh[0]}")
 		relative_path_src_temp="${relative_path_src}sources.sh"
-		echo $relative_path_src_temp
+		# echo $relative_path_src_temp
 
 		local relative_path_src=""
 		for i in `echo $relative_path_src_temp | tr "/" "\n"`;do
 			relative_path_src=${relative_path_src}'\/'$i
 		done
 		relative_path_src=${relative_path_src:2:${#relative_path_src}}
-		echo $relative_path_src
+		# echo $relative_path_src
 		for j in ${file_sh[@]};do
 			sed -i '2s/^/# File signature, dont do anything!\nif [ -z ${SOURCES__IMPORTED__} ];then\n\tPATH_RELATIVE_SH="'${relative_path_src%/*}'"\n\tcd $PATH_RELATIVE_SH\n\tsource "sources.sh"\nfi\n/' $j
 		done
