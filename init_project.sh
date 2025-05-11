@@ -111,6 +111,7 @@ main_init_project(){
 	PATH_SRC_SH=${PATH_DEVELOP}/${SRC_SH}
 	PATH_IMPORT_SH=${PATH_SRC_SH}/${IMPORT_SH}
 	PATH_REPAIR=${PATH_SRC_SH}/${REPAIR_DIR}
+	PATH_SOURCE_FILE=${PATH_SRC_SH}/"sources.sh"
 	#
 	PATH_SOURCE=${PATH_MAIN}/${SOURCES_DIR_NAME}
 	PATH_SCRIPT=${PATH_SOURCE}/${SRC_SCRIPT_DIR}
@@ -125,7 +126,7 @@ main_init_project(){
 	#
 	mount_sh_dir 
 
-	if [[ $PARH_RUN != "." ]];then
+	if [[ $PATH_RUN != "." ]];then
 		mv $PATH_MAIN $PATH_CURR
 		cd $PATH_CURR
 	fi

@@ -4,7 +4,7 @@ get_path(){
 	path_pwd=${path_pwd:1:${#path_pwd}}
 	while [[ ${#path_pwd} -gt 0 ]];do
 		if [[ ${path_pwd%%/*} = $PROJECT_NAME ]];then
-			echo $path
+			echo "$path/$PROJECT_NAME"
 			break;
 		fi
 		path="$path/${path_pwd%%/*}"
@@ -35,11 +35,12 @@ SRC_OBJECT_DIR=
 
 # Path to main directories
 PROJECT_PATH=$(get_path)
-PATH_MAIN=${PROJECT_PATH}/${PROJECT_NAME}
+PATH_MAIN=${PROJECT_PATH}
 
 PATH_DEVELOP=${PATH_MAIN}/${DEVELOP_DIR}
 PATH_SRC_SHL=${PATH_DEVELOP}/${SRC_SH_DIR}
 PATH_IMPORT_SHL=${PATH_SRC_SHL}/${IMPORT_SH_DIR}
+PATH_SOURCE_FILE=${PATH_SRC_SHL}/"sources.sh"
 PATH_REPAIR=${PATH_SRC_SHL}/${REPAIR_DIR}
 PATH_FILE_MAIN=${PATH_DEVELOP}/${FILE_MAIN_DIR}
 
@@ -47,3 +48,4 @@ PATH_SOURCE=${PATH_MAIN}/${SOURCES_DIR}
 PATH_SCRIPT=${PATH_SOURCE}/${SRC_SCRIPT_DIR}
 PATH_MODULE=${PATH_SOURCE}/${SRC_MODULE_DIR}
 PATH_OBJECT=${PATH_SOURCE}/${SRC_OBJECT_DIR}
+

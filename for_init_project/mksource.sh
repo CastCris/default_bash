@@ -16,7 +16,7 @@ import_files_to_src(){
 		if [[ ${i##*/} = "import.sh" ]] || [[ ${i##*/} = "import_src.sh" ]];then
 			continue;
 		fi
-		local relative_path_file="source \"$(relative_path "-init=${i%/*} -end=${i##*/} -dir_start=${PATH_SRC_SH} -dir_end=${i%/*}")${i##*/}\""
+		local relative_path_file="source \"$(relative_path "-init=$PATH_SRC_SH -end=$i")/${i##*/}\""
 		echo "$relative_path_file" >> sources.sh
 	done  
 	echo "">>sources.sh
@@ -58,8 +58,8 @@ put_path_src(){
 			continue;
 		fi
 
-		local relative_path_src=$(relative_path "-end=sources.sh -init=${file_sh[0]##*/} -dir_end=$PATH_SRC_SH -dir_start=${file_sh[0]}")
-		relative_path_src_temp="${relative_path_src}sources.sh"
+		local relative_path_src=$(relative_path "-end=${PATH_SOURCE_FILE%/*} -init=${file_sh[0]}")
+		relative_path_src_temp="${relative_path_src}/sources.sh"
 		# echo $relative_path_src_temp
 
 		local relative_path_src=""
