@@ -21,100 +21,115 @@ update_by_local(){ # path_to_default_bash
 	echo "$output"
 }
 
-update_project(){ # -link : The link for remote repository reference for update project | -local: Use a reference default_bash dir for update your project
-	local standard_values="-link=https://github.com/CastCris/default_bash.git -local -delete -no_import"
+diff_archs(){ # -primary : |  -secondary : | -no_files : | -files: | -import | -delete
+	local standard_values="-primary -secondary -no_files -files -import -delete -type=d,f"
+	local user_inputs="$@"
+	local values=($(interpret_options "$standard_values" "$user_inputs"))
+
+	local primary=${values[0]}
+	local secondary=${values[1]}
+	local no_files=${values[2]}
+	local files=${values[3]}
+	local import=${values[4]}
+	local delete=${values[5]}
+	local type_file=${values[6]}
+
+	if [ ! -e $primary ];then
+		echo "The primary dir doesn't exist"
+		return
+	fi
+	if [ ! -e $secondary ];then
+		echo "The secondary dir doesn't exist"
+		return
+	fi
+	if [[ $import = 0 ]] && [[ $delete = 0 ]];then
+		echo "None operation choose"
+		return
+	fi
+
+	if [[ $no_files = "1" ]];then
+		return
+	fi
+	#
+	local exclude_files=""
+	if [[ $no_files != "0" ]];then
+		local plus=""
+		for i in $(echo "$no_files" | tr "," "\n");do
+			exclude_files="$exclude_files $plus -name $i"
+			plus="-o"
+		done
+	fi
+	local search_files=()
+	# echo $exclude_files
+	switch_path "-path=$secondary"
+	if [[ $no_files = "0" ]];then
+		search_files=("$(find -type $type_file)")
+	else
+		search_files=("$(find -type $type_file \( $exclude_files \) -prune -o -type $type_file -print)")
+	fi
+	resume_path
+	#
+	if [[ $files != "0" ]];then
+		files=("$(echo $files | tr "," "\n")")
+	else
+		files=("${search_files[@]}")
+	fi
+	local path_files=$(get_pwd_path "-path=$secondary")
+
+	switch_path "-path=$primary"
+	# echo $(pwd)
+	# echo $path_files
+	# echo "${files[@]}"
+	for i in ${files[@]};do
+		local path_file=""
+		if [[ $delete = 1 ]] && [ -e $i ];then
+			continue
+		elif [[ $delete = 1 ]] && [ ! -e $i ];then
+			echo "$path_files${i#.} removed"
+			rm -r $i
+			continue
+		fi
+		#
+		path_file="$path_files${i#.}"
+		if [ -e $i ];then
+			continue
+		fi
+
+		if [ ! -e ${i%/*} ];then
+			mkdir -p ${i%/*}
+			echo "${i%/*} created"
+		fi
+		#
+		if [ -d $path_file ];then
+			mkdir -p $i
+			echo "$i created"
+		else
+			cp $path_file $i
+			echo "$i copied"
+		fi 
+	done
+	resume_path
+}
+
+update_project(){ # -link : The link for remote repository reference for update project | -local: Use a reference default_bash dir for update your project | -delete : Delete all files and dir that don't in arch OR delete the select files/dir | -no_import : Not import the missing files of the select arch OR not imported the select files
+	local standard_values="-link=https://github.com/CastCris/default_bash.git -local -import -no_import"
 	local user_input="$@"
 	local values=($(interpret_options "$standard_values" "$user_input"))
 	#
 
 	local link="${values[0]}"
 	local path_db="${values[1]}"
-	local delete="${values[2]}"
+	local import="${values[2]}"
 	local no_import="${values[3]}"
 	if [[ $path_db != "0" ]];then
 		update_by_local "$path_db"
 	else
 		update_by_remote "$link"
 	fi
-	switch_path "-path=$(get_path)"
-	files_to_delete=()
-	if [[ $delete != "0" ]] || [[ $delete != "1" ]];then
-		files_to_delete=($(echo "$delete" | tr "," "\n"))
-	fi
-	#
-	files_no_import=()
-	if [[ $no_import != "0" ]] || [[ $no_import != "1" ]];then
-		files_no_import=($(echo "$no_import" | tr "," "\n"))
-	fi
-	resume_path
+	diff_archs "-primary=$(get_path) -secondary=./$PROJECT_NAME -import -no_files=sources,$PROJECT_NAME"
+	diff_archs "-secondary=$(get_path) -primary=./$PROJECT_NAME -delete	-no_files=$PROJECT_NAME,sources"
 
-	local ignore_path=$(relative_path "-init=$(get_path) -end=./$PROJECT_NAME")
-	local path_repair="$(pwd)/$PROJECT_NAME"
-	#
-	switch_path "-path=$(get_path)"
-	local map_project_dir="$(find -path $ignore_path -prune -o -type d -print)"
-	local map_project_fls="$(find -path $ignore_path -prune -o -type f -print)"
-	resume_path
-	#
-	switch_path "-path=$PROJECT_NAME"
-	local map_repair_dir="$(find -type d)"
-	local map_repair_fls="$(find -type f)"
-	: '
-	echo "${map_project_dir[@]}"
-	echo "${map_project_fls[@]}"
-	#
-	echo "----"
-	#
-	echo "${map_repair_dir[@]}"
-	echo "${map_repair_fls[@]}"
-	'
-	switch_path "-path=$(get_path)"
-
-	# Directories
-	for i in ${map_repair_dir[@]};do
-		if [[ " ${map_project_dir[@]} " =~ [[:space:]]${i}[[:space:]] ]] || [[ $no_import = 1 ]];then
-			continue
-		fi
-		if [[ $no_import != "0" ]] && [[ " ${files_no_import[@]} " =~ [[:space:]]${i##*/}[[:space:]] ]];then
-			continue
-		fi
-		mkdir -p $i
-		echo "dir ${i##*/} imported"
-	done
-	#
-	for i in ${map_project_dir[@]};do
-		if [[ " ${map_repair_dir[@]} " =~ [[:space:]]${i}[[:space:]] ]] || [[ $delete = 0 ]] || [ ! -e $i ];then
-			continue
-		fi
-		if [[ $delete != "1" ]] && [[ ! " ${files_to_delete[@]} " =~ [[:space:]]${i##*/}[[:space:]] ]];then
-			continue
-		fi
-		echo "dir ${i##*/} removed"
-		rm -r $i
-	done
-	# Files
-	for i in ${map_repair_fls[@]};do
-		if [[ " ${map_project_fls[@]} " =~ [[:space:]]${i}[[:space:]] ]] || [[ $no_import = 1 ]];then
-			continue
-		fi
-		if [[ $no_import != "0" ]] && [[ " ${files_no_import[@]} " =~ [[:space:]]${i##*/}[[:space:]] ]];then
-			continue
-		fi
-		cp "${path_repair}${i#.}" ${i%/*}
-		echo "file ${i##*/} imported"
-	done
-	#
-	for i in ${map_project_fls[@]};do
-		if [[ " ${map_repair_fls[@]} " =~ [[:space:]]${i}[[:space:]] ]] || [[ $delete = 0 ]] || [ ! -e $i ];then
-			continue
-		fi
-		if [[ $delete != "1" ]] && [[ ! " ${files_to_delete[@]} " =~ [[:space:]]${i##*/}[[:space:]] ]];then
-			continue
-		fi
-		echo "file ${i##*/} removed"
-		rm $i
-	done
-
-	resume_path 
 	rm -r $PROJECT_NAME
 }
+update_project "$@"
+

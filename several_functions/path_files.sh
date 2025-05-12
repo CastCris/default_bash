@@ -2,6 +2,35 @@
 source $(find . -type f -name import.sh)
 import_file "interpret_line.sh"
 
+switch_path(){ # -path : The relative path for wish directory
+	local standard_values="-path=."
+	local user_input="$@"
+	local values=($(interpret_options "$standard_values" "$user_input"))
+
+	if [ -z $CURR_DIR ];then
+		CURR_DIR=$(pwd)
+	fi
+	local new_path=${values[0]}
+	cd $new_path
+}
+resume_path(){
+	if [ -z $CURR_DIR ];then
+		return
+	fi
+	cd $CURR_DIR
+	CURR_DIR=""
+}
+get_pwd_path(){ # -path : The path for wish directory
+	local standard_values="-path=."
+	local user_inputs="$@"
+	local values=($(interpret_options "$standard_values" "$user_inputs"))
+
+	local path_wish=${values[0]}
+	switch_path "-path=$path_wish"
+	local path=$(pwd)
+	resume_path
+	echo $path
+}
 relative_path(){ # -init : The point from start | -end : The point from destiny | -dir_start : The path directory where is the point start | -dir_end : The path_direcoty where if the point end
 	local standard_values="-init=. -end=home -dir_start=/home/$USER -dir_end=home -search"
 	local user_input="$@"
@@ -106,21 +135,23 @@ relative_path(){ # -init : The point from start | -end : The point from destiny 
 	fi
 	echo "$relative_path"
 }
-switch_path(){ # -path : The relative path for wish directory
-	local standard_values="-path=."
-	local user_input="$@"
-	local values=($(interpret_options "$standard_values" "$user_input"))
+get_arch_path(){ # -path : Path to directory | -type : The type file wish
+	local standard_values="-path=. -type=f,d -relative"
+	local user_inputs="$@"
+	local values=($(interpret_options "$standard_values" "$user_inputs"))
 
-	if [ -z $CURR_DIR ];then
-		CURR_DIR=$(pwd)
+	local path=${values[0]}
+	local type_file=${values[1]}
+	local relative=${values[2]}
+	#
+	switch_path "-path=$path"
+	if [[ $relative = "0" ]];then
+		path=""
+	else
+		path=$(pwd)
 	fi
-	local new_path=${values[0]}
-	cd $new_path
+	local arch="$(find $path -type "$type_file")"	
+	
+	echo "$arch"
 }
-resume_path(){
-	if [ -z $CURR_DIR ];then
-		return
-	fi
-	cd $CURR_DIR
-	CURR_DIR=""
-}
+
