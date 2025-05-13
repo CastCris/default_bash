@@ -20,8 +20,18 @@ update_by_local(){ # path_to_default_bash
 	local output="$(${path_to_db}/init_project.sh "$arguments_used -path_run=$path_to_db" 2>&1)"
 	echo "$output"
 }
+diff_files(){ # -file1 : | -file2: 
+	local standard_values="-file1 -file2"
+	local user_inputs="$@"
+	local values=($(interpret_options "$standard_values" "$user_inputs"))
 
-diff_archs(){ # -primary : |  -secondary : | -no_files : | -files: | -import | -delete
+	local file_receiver=${values[0]}
+	local file_issuer=${values[1]}
+	echo "$(comm -2 -3 <(sort $file_receiver) <(sort $file_issuer))"
+}
+
+
+diff_archs(){ # -primary : |  -secondary : | -no_files : | -files: | -import | -delete | -type :
 	local standard_values="-primary -secondary -no_files -files -import -delete -type=d,f"
 	local user_inputs="$@"
 	local values=($(interpret_options "$standard_values" "$user_inputs"))
@@ -69,7 +79,7 @@ diff_archs(){ # -primary : |  -secondary : | -no_files : | -files: | -import | -
 	fi
 	resume_path
 	#
-	if [[ $files != "0" ]];then
+	if [[ $files != "0" ]] && [[ $files != "1" ]];then
 		files=("$(echo $files | tr "," "\n")")
 	else
 		files=("${search_files[@]}")
@@ -81,30 +91,35 @@ diff_archs(){ # -primary : |  -secondary : | -no_files : | -files: | -import | -
 	# echo $path_files
 	# echo "${files[@]}"
 	for i in ${files[@]};do
-		local path_file=""
+		local path_single_file="$path_files${i#.}"
 		if [[ $delete = 1 ]] && [ -e $i ];then
 			continue
-		elif [[ $delete = 1 ]] && [ ! -e $i ];then
-			echo "$path_files${i#.} removed"
-			rm -r $i
+		elif [[ $delete = 1 ]] && [ ! -e $i ] && [ -e $path_single_file ];then
+			echo "$i removed"
+			rm -r "$path_single_file"
+			continue
+		elif [[ $delete = 1 ]];then
 			continue
 		fi
 		#
-		path_file="$path_files${i#.}"
+		if [ -f $i ] && [[ $(diff_files "-file1=$i -file2=$path_single_file") != "" ]];then
+			echo "$(cat $path_single_file)" > $i
+			echo "$i modified"
+		fi
 		if [ -e $i ];then
 			continue
 		fi
-
+		#
 		if [ ! -e ${i%/*} ];then
 			mkdir -p ${i%/*}
 			echo "${i%/*} created"
 		fi
 		#
-		if [ -d $path_file ];then
+		if [ -d $path_single_file ];then
 			mkdir -p $i
 			echo "$i created"
 		else
-			cp $path_file $i
+			cp $path_single_file $i
 			echo "$i copied"
 		fi 
 	done
@@ -112,7 +127,7 @@ diff_archs(){ # -primary : |  -secondary : | -no_files : | -files: | -import | -
 }
 
 update_project(){ # -link : The link for remote repository reference for update project | -local: Use a reference default_bash dir for update your project | -delete : Delete all files and dir that don't in arch OR delete the select files/dir | -no_import : Not import the missing files of the select arch OR not imported the select files
-	local standard_values="-link=https://github.com/CastCris/default_bash.git -local -import -no_import"
+	local standard_values="-link=https://github.com/CastCris/default_bash.git -local -import -no_import -delete -no_delete"
 	local user_input="$@"
 	local values=($(interpret_options "$standard_values" "$user_input"))
 	#
@@ -121,15 +136,17 @@ update_project(){ # -link : The link for remote repository reference for update 
 	local path_db="${values[1]}"
 	local import="${values[2]}"
 	local no_import="${values[3]}"
+	local delete="${values[4]}"
+	local no_delete="${values[5]}"
+	#
 	if [[ $path_db != "0" ]];then
 		update_by_local "$path_db"
 	else
 		update_by_remote "$link"
 	fi
-	diff_archs "-primary=$(get_path) -secondary=./$PROJECT_NAME -import -no_files=sources,$PROJECT_NAME"
-	diff_archs "-secondary=$(get_path) -primary=./$PROJECT_NAME -delete	-no_files=$PROJECT_NAME,sources"
+	diff_archs "-primary=$(get_path) -secondary=./$PROJECT_NAME -import -no_files=sources,$PROJECT_NAME,$no_import -files=$import"
+	diff_archs "-secondary=$(get_path) -primary=./$PROJECT_NAME -delete	-no_files=$PROJECT_NAME,sources,$no_delete -files=$delete"
 
 	rm -r $PROJECT_NAME
 }
 update_project "$@"
-
