@@ -30,83 +30,95 @@ diff_files(){ # -file1 : | -file2:
 	echo "$(comm -2 -3 <(sort $file_receiver) <(sort $file_issuer))"
 }
 
-
-diff_archs(){ # -primary : |  -secondary : | -no_files : | -files: | -import | -delete | -type :
-	local standard_values="-primary -secondary -no_files -files -import -delete -type=d,f"
-	local user_inputs="$@"
-	local values=($(interpret_options "$standard_values" "$user_inputs"))
-
-	local primary=${values[0]}
-	local secondary=${values[1]}
-	local no_files=${values[2]}
-	local files=${values[3]}
-	local import=${values[4]}
-	local delete=${values[5]}
-	local type_file=${values[6]}
-
-	if [ ! -e $primary ];then
-		echo "The primary dir doesn't exist"
-		return
-	fi
-	if [ ! -e $secondary ];then
-		echo "The secondary dir doesn't exist"
-		return
-	fi
-	if [[ $import = 0 ]] && [[ $delete = 0 ]];then
-		echo "None operation choose"
-		return
-	fi
-
-	if [[ $no_files = "1" ]];then
-		return
-	fi
+update_project(){ # -link : | -local : | -import : | -no_import : | -import_path: | -no_import_path : | -delete: | -no_delete: | -delete_path : | -no_delete_path :
+	local standard_values="-link -local -import -import_path -no_import -no_import_path -delete -delete_path -no_delete -no_delete_path -ignore -ignore_path -just -just_path -fear"
+	local user_input="$@"
+	local values=($(interpret_options "$standard_values" "$user_input"))
 	#
-	local exclude_files=""
-	if [[ $no_files != "0" ]];then
-		local plus=""
-		for i in $(echo "$no_files" | tr "," "\n");do
-			exclude_files="$exclude_files $plus -name $i"
-			plus="-o"
-		done
-	fi
-	local search_files=()
-	# echo $exclude_files
-	switch_path "-path=$secondary"
-	if [[ $no_files = "0" ]];then
-		search_files=("$(find -type $type_file)")
-	else
-		search_files=("$(find -type $type_file \( $exclude_files \) -prune -o -type $type_file -print)")
-	fi
-	resume_path
+	local link="${values[0]}"
+	local path_db="${values[1]}"
 	#
-	if [[ $files != "0" ]] && [[ $files != "1" ]];then
-		files=("$(echo $files | tr "," "\n")")
-	else
-		files=("${search_files[@]}")
-	fi
-	local path_files=$(get_pwd_path "-path=$secondary")
+	local import="${values[2]}"
+	local import_path="${values[3]}"
+	local no_import="${values[4]}"
+	local no_import_path="${values[5]}"
+	#
+	local delete="${values[6]}"
+	local delete_path="${values[7]}"
+	local no_delete="${values[8]}"
+	local no_delete_path="${values[9]}"
+	#
+	local ignore_names="${values[10]}"
+	local ignore_paths="${values[11]}"
+	local just_names="${values[12]}"
+	local just_paths="${values[13]}"
+	#
+	local fear="${values[14]}"
+	#
+	import="$import,$just_names"
+	import_path="$import_path,$just_paths"
+	no_import="$no_import,$ignore_names"
+	no_import_path="$no_import_path,$ignore_paths"
 
-	switch_path "-path=$primary"
-	# echo $(pwd)
-	# echo $path_files
-	# echo "${files[@]}"
-	for i in ${files[@]};do
-		local path_single_file="$path_files${i#.}"
-		if [[ $delete = 1 ]] && [ -e $i ];then
+	delete="$delete,$just_names"
+	delete_path="$delete_path,$just_paths"
+	no_delete="$no_delete,$ignore_names"
+	no_delete_path="$no_delete_path,$ignore_paths"
+	#
+	FILE_ARCH_OLD="arch_old"
+	FILE_ARCH_NEW="arch_new"
+	#
+	local arch_old_diff="$(get_arch_dir "-relative -path=$(get_path) -no_name=$no_delete -js_name=$delete -js_path=$delete_path -no_path=$no_delete_path")"
+	local arch_old="$(get_arch_dir "-relative -path=$(get_path)")"
+	echo "$arch_old" > $FILE_ARCH_OLD
+	if [[ $path_db != "0" ]];then
+		update_by_local "$path_db"
+	else
+		update_by_remote "$link"
+	fi
+	local arch_new_diff="$(get_arch_dir "-relative -path=./$PROJECT_NAME -no_name=$no_import -js_name=$import -js_path=$import_path -no_path=$no_import_path")"
+	local arch_new="$(get_arch_dir "-relative -path=./$PROJECT_NAME")"
+	echo "$arch_new" > $FILE_ARCH_NEW
+	#
+	local diff_new_old="$(comm -2 -3 <(sort $FILE_ARCH_NEW) <(sort $FILE_ARCH_OLD))"
+	local diff_old_new="$(comm -2 -3 <(sort $FILE_ARCH_OLD) <(sort $FILE_ARCH_NEW))"
+	# cat $FILE_ARCH_OLD
+	# cat $FILE_ARCH_NEW
+	rm $FILE_ARCH_OLD
+	rm $FILE_ARCH_NEW
+
+	echo -e "NEW X OLD\n$diff_new_old"
+	echo -e "OLD X NEW\n$diff_old_new"
+
+	local path_file=$(get_pwd_path "-path=./$PROJECT_NAME")
+	switch_path "-path=$(get_path)"
+
+	arch_new=("$arch_new")
+	arch_old=("$arch_old")
+	for i in ${arch_new[@]};do
+		local path_single_file=${path_file}${i#.}
+		if [ -d $i ];then
 			continue
-		elif [[ $delete = 1 ]] && [ ! -e $i ] && [ -e $path_single_file ];then
-			echo "$i removed"
-			rm -r "$path_single_file"
+		fi
+		if [[ " ${arch_old[@]} " =~ [[:space:]]$i[[:space:]] ]] && [[ $(diff_files "-file1=$path_single_file -file2=$i") = "" ]];then
 			continue
-		elif [[ $delete = 1 ]];then
+		fi
+		if [[ ! " ${arch_new_diff[@]} " =~ [[:space:]]$i[[:space:]] ]];then
 			continue
 		fi
 		#
-		if [ -f $i ] && [[ $(diff_files "-file1=$i -file2=$path_single_file") != "" ]];then
-			echo "$(cat $path_single_file)" > $i
-			echo "$i modified"
+		local op_name=""
+		if [ -f $i ];then
+			op_name="changed"
+		else
+			op_name="import"
 		fi
-		if [ -e $i ];then
+		#
+		if [[ $fear = 1 ]];then
+			echo -n "Do you really want to $op_name the $i? "
+			read answer
+		fi
+		if [[ $answer = "n" ]];then
 			continue
 		fi
 		#
@@ -114,39 +126,38 @@ diff_archs(){ # -primary : |  -secondary : | -no_files : | -files: | -import | -
 			mkdir -p ${i%/*}
 			echo "${i%/*} created"
 		fi
-		#
-		if [ -d $path_single_file ];then
-			mkdir -p $i
-			echo "$i created"
-		else
+		if [[ $op_name = "changed" ]];then
+			rm $i
 			cp $path_single_file $i
-			echo "$i copied"
-		fi 
+			echo "$i changed"
+		elif [[ $op_name = "import" ]];then
+			if [ -d $path_single_file ];then
+				mkdir -p $i
+				echo "$i created"
+			else
+				cp $path_single_file $i
+				echo "$i imported"
+			fi
+		fi
 	done
+	for i in ${arch_old[@]};do
+		if [[ " ${arch_new[@]} " =~ [[:space:]]$i[[:space:]] ]] || [[ ! " ${arch_old_diff[@]} " =~ [[:space:]]$i[[:space:]] ]];then
+			continue
+		fi
+		#
+		if [[ $fear = 1 ]];then
+			echo -n "Do you really want to remove the $i? "
+			read answer
+		fi
+		if [[ $answer = "n" ]];then
+			continue
+		fi
+		#
+		rm -r $i
+		echo "$i removed"
+	done
+
 	resume_path
-}
-
-update_project(){ # -link : The link for remote repository reference for update project | -local: Use a reference default_bash dir for update your project | -delete : Delete all files and dir that don't in arch OR delete the select files/dir | -no_import : Not import the missing files of the select arch OR not imported the select files
-	local standard_values="-link=https://github.com/CastCris/default_bash.git -local -import -no_import -delete -no_delete"
-	local user_input="$@"
-	local values=($(interpret_options "$standard_values" "$user_input"))
-	#
-
-	local link="${values[0]}"
-	local path_db="${values[1]}"
-	local import="${values[2]}"
-	local no_import="${values[3]}"
-	local delete="${values[4]}"
-	local no_delete="${values[5]}"
-	#
-	if [[ $path_db != "0" ]];then
-		update_by_local "$path_db"
-	else
-		update_by_remote "$link"
-	fi
-	diff_archs "-primary=$(get_path) -secondary=./$PROJECT_NAME -import -no_files=sources,$PROJECT_NAME,$no_import -files=$import"
-	diff_archs "-secondary=$(get_path) -primary=./$PROJECT_NAME -delete	-no_files=$PROJECT_NAME,sources,$no_delete -files=$delete"
-
 	rm -r $PROJECT_NAME
 }
 update_project "$@"
