@@ -3,6 +3,8 @@ interpret_options(){ # options_curr options_user delimiter
 	local options_curr=($1)
 	local options_user=($2)
 	local delimiter=$3
+	#
+	local i
 	if [[ ${#delimiter} -eq 0 ]];then
 		delimiter="="
 	fi
@@ -55,4 +57,13 @@ interpret_options(){ # options_curr options_user delimiter
 		local option_temp=${i%%${delimiter}*}
 		echo -n "${options[$option_temp]} "
 	done 
+}
+empty_flag(){ # flag_value default_empty_value
+	local flag_value="$1"
+	local default_empty_value="$2"
+	if [[ $flag_value = $default_empty_value ]];then
+		echo ""
+		return
+	fi
+	echo $flag_value
 }

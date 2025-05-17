@@ -19,6 +19,9 @@ line(){ # -o: Operations | -to : Tot operations | -b : Blocks | -fb: Fill blocks
 	local blocks=${values[2]}
 	local fill_blocks=${values[3]}
 	local fill_spaces=${values[4]}
+	#
+	local i
+	#
 	if [[ $fill_spaces = 0 ]];then
 		fill_spaces=" ";
 	fi
@@ -88,6 +91,8 @@ pass_by_message(){ # -msg : Message |  -b : Blocks | -i : Index | -steps : Stetp
 	local index=${values[2]}
 	local steps=${values[3]}
 	local fill_space=${values[4]}
+	#
+	local i
 	if [[ $fill_sapce = "0" ]];then
 		fill_space=" "
 	fi
@@ -131,12 +136,19 @@ fill_line_with(){ # -fb : Fill block with any character | -smsg: A sample of the
 	fi
 	local sample_message=$(split_str "-str=${values[1]} -del=${values[3]}")
 	local message=${values[2]}
+	#
+	local i
+	#
+	if [[ $sample_message = 0 ]];then
+		sample_message=""
+	fi
 	if [[ $message = 0 ]];then
+		sample_message=""
 		message=$sample_message
 	else
 		message=$(split_str "-str=$message -del=${values[3]}")
 	fi
-
+	#
 
 	local len_fill=$(tput cols)
 	if [[ ${#sample_message} -ne 0 ]];then
@@ -158,7 +170,7 @@ fill_line_with(){ # -fb : Fill block with any character | -smsg: A sample of the
 		echo -n "$char"
 	done
 	if [[ $((($(tput cols)-${#sample_message})%2)) = 1 ]];then
-		echo -n $char
+		echo -n "$char"
 	fi 
 }
 justify_line(){ # -smsg : A message sample | -msg : The real message | -fs : The fill of space | -del : Delimiter of string
