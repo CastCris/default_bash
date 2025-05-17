@@ -135,24 +135,6 @@ relative_path(){ # -init : The point from start | -end : The point from destiny 
 	fi
 	echo "$relative_path"
 }
-mount_flags(){ # -type : | -content : | -connect : 
-	local standard_values="-type -content -connect"
-	local user_inputs="$@"
-	local values=($(interpret_options "$standard_values" "$user_inputs"))
-
-	local name_flag=${values[0]}
-	local content=($(echo ${values[1]} | tr "," "\n"))
-	local connect=${values[2]}
-	#
-	local output=""
-	for i in ${!content[@]};do
-		if [[ $i -gt 0 ]];then
-			output="$output $connect"
-		fi
-		output="$output $name_flag ${content[i]}"
-	done
-	echo "$output"
-}
 get_arch_dir(){ # -path : Path to directory | -type : The type file wish
 	local standard_values="-path=. -type=f,d -relative -no_path -no_name -js_path -js_name"
 	local user_inputs="$@"
@@ -168,25 +150,64 @@ get_arch_dir(){ # -path : Path to directory | -type : The type file wish
 	local js_paths=${values[5]}
 	local js_names=${values[6]}
 	#
-	local exclude_files="$(mount_flags "-type=-path -content=$no_paths -connect=-o") -o $(mount_flags "-type=-name -content=$no_names -connect=-o")"
-	local single_files="$(mount_flags "-type=-path -content=$js_paths -connect=-o") -o $(mount_flags "-type=-name -content=$js_names -connect=-o")"
-	echo $single_files
-	#
 	switch_path "-path=$path"
-	if [[ $relative = "1" ]];then
+
+	if [[ $relative = 1 ]];then
 		path=""
 	else
 		path=$(pwd)
 	fi
-	local arch=""
-	if [[ ${#exclude_files} -ne 0 ]];then
-		arch="$(find $path \( -type "$type_file" \( $single_files \) \) -exec find {} -type $type_file \( $exclude_files \) -prune -o -type $type_file -print \;)"
-	else
-		arch="$(find $path \( -type "$type_file" \( $single_files \) \) -exec find {} -type $type_file -print \;)"
+
+	# EXCLUDE FILES OF SEARCH
+	local grep_no_paths=""
+	local grep_no_names=""
+	for i in $(echo $no_paths | tr "," "\n");do
+		if [[ $i = "0" ]] || [[ $i = "" ]];then
+			continue
+		fi
+		grep_no_paths="$grep_no_paths|grep -vw $i"
+	done
+	for i in $(echo $no_names | tr "," "\n");do
+		if [[ $i = "0" ]] || [[ $i = "" ]];then
+			continue
+		fi
+		grep_no_names="$grep_no_names|grep -vw $i"
+	done
+
+	# echo "no_names: $grep_no_names"
+	# echo "no_paths: $grep_no_paths"
+	# JUST FILES IN SEARCH
+	local grep_js_names=""
+	local grep_js_paths=""
+
+	for i in $(echo $js_names | tr "," "\n");do
+		if [[ $i = "0" ]] || [[ $i = "" ]];then
+			continue
+		fi
+		grep_js_names="$grep_js_names|$i"
+	done
+	if [[ ${#grep_js_names} -ne 0 ]];then
+		grep_js_names=${grep_js_names:1}
+		grep_js_names="| grep -Ew '$grep_js_names'"
 	fi
+
+	for i in $(echo $js_paths | tr "," "\n");do
+		if [[ $i = "0" ]] || [[ $i = "" ]];then
+			continue
+		fi
+		grep_js_paths="$grep_js_paths|$i"
+	done
+	if [[ ${#grep_js_paths} -ne 0 ]];then
+		grep_js_paths=${grep_js_paths:1}
+		grep_js_paths="| grep -Ew '$grep_js_paths'"
+	fi
+
+	# echo "names: $grep_js_names"
+	# echo "paths: $grep_js_paths"
+	#
+	local command_find="find -type $type_file $grep_js_paths $grep_no_paths $grep_js_names $grep_no_names"
+	arch="$(eval $command_find)"
+
 	resume_path
-	
 	echo "$arch"
 }
-get_arch_dir "$@"
-
