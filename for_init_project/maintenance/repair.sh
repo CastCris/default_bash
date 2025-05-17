@@ -79,7 +79,6 @@ update_project(){ # -link : | -local : | -import : | -no_import : | -import_path
 	fi
 	local arch_new_diff="$(get_arch_dir "-relative -path=./$PROJECT_NAME -no_name=$no_import -js_name=$import -js_path=$import_path -no_path=$no_import_path -type=f")"
 	local arch_new="$(get_arch_dir "-relative -path=./$PROJECT_NAME -type=f")"
-	echo "||||"
 	#
 	echo "$arch_new" > $FILE_ARCH_NEW
 	echo "$arch_old" > $FILE_ARCH_OLD
@@ -96,8 +95,8 @@ update_project(){ # -link : | -local : | -import : | -no_import : | -import_path
 	rm $FILE_ARCH_OLD
 	rm $FILE_ARCH_NEW
 
-	echo -e "NEW X OLD\n$diff_new_old"
-	echo -e "OLD X NEW\n$diff_old_new"
+	# echo -e "NEW X OLD\n$diff_new_old"
+	# echo -e "OLD X NEW\n$diff_old_new"
 
 	local path_file=$(get_pwd_path "-path=./$PROJECT_NAME")
 	switch_path "-path=$(get_path)"
@@ -114,9 +113,11 @@ update_project(){ # -link : | -local : | -import : | -no_import : | -import_path
 			continue
 		fi
 		if [[ $fearless = 0 ]];then
-			fill_line_with "-fb=0"
 			echo -ne "\rImport $i? "
 			read -n 1 answer
+			#
+			echo -ne "\r"
+			fill_line_with "-fb=0"
 		fi
 		if [[ $answer = "n" ]];then
 			continue
@@ -125,8 +126,8 @@ update_project(){ # -link : | -local : | -import : | -no_import : | -import_path
 		if [ ! -e ${i%/*} ];then
 			mkdir -p ${i%/*}
 		fi
-		# cp $path_single_file $i
-		echo -e "\r\e[1;32m Imported\e[0m $i"
+		cp $path_single_file $i
+		echo -e "\e[1;32m Imported\e[0m $i"
 	done
 	#
 	# Delete files
@@ -136,15 +137,17 @@ update_project(){ # -link : | -local : | -import : | -no_import : | -import_path
 			continue
 		fi
 		if [[ $fearless = 0 ]];then
-			fill_line_with "-fb=0"
 			echo -ne "\rDelete $i? "
 			read -n 1 answer
+			#
+			echo -ne "\r"
+			fill_line_with "-fb=0"
 		fi
 		if [[ $answer = "n" ]];then
 			continue
 		fi
 
-		# rm -r $i
+		rm -r $i
 		echo -e "\r\e[1;31m Deleted \e[0m $i"
 	done
 	#
@@ -156,18 +159,22 @@ update_project(){ # -link : | -local : | -import : | -no_import : | -import_path
 			continue
 		fi
 		if [[ $fearless = 0 ]];then
-			fill_line_with "-fb=0"
 			echo -ne "\rChange $i? "
 			read -n 1 answer
+			#
+			echo -ne "\r"
+			fill_line_with "-fb=0"
 		fi
 		if [[ $answer = "n" ]];then
 			continue
 		fi
 
-		# echo "$(cat $path_single_file)" > $i
+		echo "$(cat $path_single_file)" > $i
 		echo -e "\r\e[1;33m Changed \e[0m $i"
 	done
+	fill_line_with "-fb=~"
 
 	resume_path
 	rm -r $PROJECT_NAME
 }
+update_project "$@"
