@@ -1,4 +1,4 @@
-#!/bin/bash
+#interpret_str.sh
 interpret_options(){ # options_curr options_user delimiter 
 	local options_curr=($1)
 	local options_user=($2)
@@ -58,12 +58,16 @@ interpret_options(){ # options_curr options_user delimiter
 		echo -n "${options[$option_temp]} "
 	done 
 }
-empty_flag(){ # flag_value default_empty_value
-	local flag_value="$1"
-	local default_empty_value="$2"
-	if [[ $flag_value = $default_empty_value ]];then
-		echo ""
-		return
+change_IFS(){ # new_IFS_value
+	local new_IFS_value="$1"
+	if [ -z "$PREV_IFS" ];then
+		PREV_IFS="$IFS"
 	fi
-	echo $flag_value
+	IFS="$new_IFS_value"
+}
+return_IFS(){
+	if [ -z "$PREV_IFS" ];then
+		continue
+	fi
+	IFS=$PREV_IFS
 }
