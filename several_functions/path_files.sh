@@ -211,3 +211,33 @@ get_arch_dir(){ # -path : Path to directory | -type : The type file wish
 	resume_path
 	echo "$arch"
 }
+interpret_arch(){ # -path : | -no_tab
+	local standard_values="-path -no_tab"
+	local user_inputs="$@"
+	local values=($(interpret_options "$standard_values" "$user_inputs"))
+
+	local path=${values[0]}
+	local no_tab=${values[1]}
+	if [ ! -e $path ];then
+		echo "Insert a valid path"
+		return
+	fi
+	if [ ! -f $path ];then
+		echo "Inseer a path of file"
+		return
+	fi
+	local arch_file="$(cat $path)"
+	#
+	# Interpret Arch
+	#
+	local prev=()
+	change_IFS $'\n'
+	for i in $(echo "$arch_file");do
+		change_IFS $'\t'
+		read -r dir_name <<< "$i"
+		del_count=$(echo "$i" | grep -o $'\t' | wc -l)
+		echo "$del_count $dir_name"
+	done
+	return_IFS
+}
+interpret_arch "$@"
