@@ -34,8 +34,8 @@ IMPORT_FILES_SH='path_files\.sh|message_logs\.sh|interpret_line\.sh|import\.sh|i
 
 
 # Standard attribute for project
-STANDARD_OPTIONS=" -n -p -l -develop -sources -is_main -src_sh -import_sh -maintenance -src_s_dir -src_m_dir -src_o_dir"
-STANDARD_ARGUMENTS="-n=$PROJECT_NAME -p=$PROJECT_PATH -l=c -develop=$DEVELOP_DIR_NAME -sources=$SOURCES_DIR_NAME -is_main=$FILE_MAIN_DIR_NAME -src_sh=$SRC_SH -import_sh=$IMPORT_SH -maintenance=$REPAIR_DIR -src_s_dir=$SRC_SCRIPT_DIR -src_m_dir=$SRC_MODULE_DIR -src_o_dir=$SRC_OBJECT_DIR -o -path_run=."
+STANDARD_OPTIONS=" -name -path -language -develop -sources -is_main -src_sh -import_sh -maintenance -src_s_dir -src_m_dir -src_o_dir"
+STANDARD_ARGUMENTS="-name=$PROJECT_NAME -path=$PROJECT_PATH -language=c -develop=$DEVELOP_DIR_NAME -sources=$SOURCES_DIR_NAME -is_main=$FILE_MAIN_DIR_NAME -src_sh=$SRC_SH -import_sh=$IMPORT_SH -maintenance=$REPAIR_DIR -src_s_dir=$SRC_SCRIPT_DIR -src_m_dir=$SRC_MODULE_DIR -src_o_dir=$SRC_OBJECT_DIR -o -path_run=."
 : '
 -nm: 			name project
 -p: 			path for project
