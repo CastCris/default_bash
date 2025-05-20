@@ -211,33 +211,57 @@ get_arch_dir(){ # -path : Path to directory | -type : The type file wish
 	resume_path
 	echo "$arch"
 }
-interpret_arch(){ # -path : | -no_tab
-	local standard_values="-path -no_tab"
+interpret_arch(){ # -path_file : | -no_tab
+	local standard_values="-local -destiny=. -no_tab -relative"
 	local user_inputs="$@"
 	local values=($(interpret_options "$standard_values" "$user_inputs"))
 
-	local path=${values[0]}
-	local no_tab=${values[1]}
-	if [ ! -e $path ];then
+	local path_file=${values[0]}
+	local destiny=${values[1]}
+	local space=${values[2]}
+	local relative=${values[3]}
+	local i
+	local j
+
+	if [ ! -e $path_file ] || [ ! -e $destiny ] || [ -d $path_file ] || [ -f $destiny ];then
 		echo "Insert a valid path"
 		return
 	fi
-	if [ ! -f $path ];then
-		echo "Inseer a path of file"
-		return
+	
+	switch_path "-path=$destiny"
+	if [[ $relative = 1 ]];then
+		destiny="."
 	fi
-	local arch_file="$(cat $path)"
-	#
-	# Interpret Arch
-	#
-	local prev=()
-	change_IFS $'\n'
-	for i in $(echo "$arch_file");do
-		change_IFS $'\t'
-		read -r dir_name <<< "$i"
-		del_count=$(echo "$i" | grep -o $'\t' | wc -l)
-		echo "$del_count $dir_name"
+	local arch="$(cat $path_file | cat -A | sed 's/\^I/@/g')"
+	local prev=("$destiny")
+	for i in ${arch[@]};do
+		i=${i::-1}
+		local depth_level=$(echo "$i" | grep -o "@" | wc -l)
+		local dir_name=${i##*@}
+		local make_var="PATH_${dir_name^^}"
+
+		local path_curr=${prev[0]}
+		for j in `seq 1 $depth_level`;do
+			path_curr="$path_curr/${prev[$j]}"
+		done
+		path_curr="$path_curr/$dir_name"
+
+		if [ ! -z "$(eval "echo \$$make_var")" ];then
+			local value_make_var=$(eval "echo \$$make_var")
+			local new_var="$make_var""_$(dirname ${value_make_var#.} | tr "/" "\n" | cut -c1-2 | sed ':a;N;$!ba;s/\n//g' | tr 'a-z' 'A-Z')=$value_make_var"
+			make_var="$make_var""_$(dirname ${path_curr#.} | tr "/" "\n" | cut -c1-2 | sed ':a;N;$!ba;s/\n//g' | tr 'a-z' 'A-Z')"
+
+			eval "$new_var"
+			# echo "-$make_var"
+			# echo "-$new_var"
+		fi
+		make_var="$make_var=$path_curr"
+		eval "$make_var"
+		echo $make_var
+		#
+		# echo $path_curr
+		prev=($(echo $path_curr | tr "/" "\n"))
 	done
-	return_IFS
+	resume_path
 }
 interpret_arch "$@"
