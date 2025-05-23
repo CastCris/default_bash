@@ -135,6 +135,7 @@ relative_path(){ # -init : The point from start | -end : The point from destiny 
 	fi
 	echo "$relative_path"
 }
+
 get_arch_dir(){ # -path : Path to directory | -type : The type file wish
 	local standard_values="-path=. -type=f,d -relative -no_path -no_name -js_path -js_name"
 	local user_inputs="$@"
@@ -213,7 +214,7 @@ get_arch_dir(){ # -path : Path to directory | -type : The type file wish
 }
 
 interpret_arch(){ # - : | -no_tab
-	local standard_values="-local -destiny=. -no_tab -relative -make -log"
+	local standard_values="-local -destiny=. -no_tab -relative -make -log -sort"
 	local user_inputs="$@"
 	local values=($(interpret_options "$standard_values" "$user_inputs"))
 
@@ -223,10 +224,14 @@ interpret_arch(){ # - : | -no_tab
 	local relative=${values[3]}
 	local make=${values[4]}
 	local log=${values[5]}
+	local sort_log=${values[6]}
 	local i
 	local j
 	if [[ $log = 1 ]];then
 		log="interpret_arch.txt"
+	fi
+	if [[ $sort_log = 1 ]];then
+		sort_log="name"
 	fi
 
 	if [ ! -e $path_file ] || [ ! -e $destiny ] || [ -d $path_file ] || [ -f $destiny ];then
@@ -258,10 +263,10 @@ interpret_arch(){ # - : | -no_tab
 		dir_path="$dir_path/$dir_name"
 		prev=($(echo $dir_path | tr "/" "\n"))
 
-		# echo "$var_name=$dir_path"
 		if [[ " ${paths_used[@]} " =~ [[:space:]]$dir_path[[:space:]] ]];then
 			continue
 		fi
+		# echo "$var_name=$dir_path"
 		paths_used+=(${dir_path})
 		if [[ $log != "0" ]];then
 			echo "$var_name=$dir_path/" >> $log
@@ -281,7 +286,7 @@ interpret_arch(){ # - : | -no_tab
 			vars_content_rev+=($(echo $i | tr '/' '\n' | tac | tr '\n' '/'| cut -d'/' -f3-))
 		done
 		# echo "****"
-		# echo "vars_content=${vars_content_rev[@]}"
+		echo "vars_content=${vars_content_rev[@]}"
 		local index=1
 		local treated_names=()
 		while [[ ${#treated_names[@]} -lt ${#vars_content[@]} ]];do
@@ -300,15 +305,20 @@ interpret_arch(){ # - : | -no_tab
 				fi
 				local new_var_name="${var_name}__$(echo $curr_item_rev | cut -d'/' -f-$index | tr '/' '_' | tr '[:lower:]' '[:upper:]')"
 				local new_var="${new_var_name}=$curr_item"
-				# echo "$new_var"
-				sed -i 's|.*'$curr_item'|'$new_var'|' $log
+				echo "$new_var"
+				sed -i 's|.*'$curr_item'$|'$new_var'|' $log
+				echo "======"
 				treated_names+=($curr_item_rev)
 			done
 			index=$(($index+1))
 			# echo "treated_names=${treated_names[@]}"
 		done
-		break
 	done < $log
+	if [[ $sort_log = "name" ]];then
+		echo "$(cat $log | sort )" > $log
+	elif [[ $sort_log = "path" ]];then
+		echo "$(cat $log | sort -t= -k2 )" > $log
+	fi
 	#
 	resume_path
 }
