@@ -211,8 +211,9 @@ get_arch_dir(){ # -path : Path to directory | -type : The type file wish
 	resume_path
 	echo "$arch"
 }
-interpret_arch(){ # -path_file : | -no_tab
-	local standard_values="-local -destiny=. -no_tab -relative"
+
+interpret_arch(){ # - : | -no_tab
+	local standard_values="-local -destiny=. -no_tab -relative -make -log"
 	local user_inputs="$@"
 	local values=($(interpret_options "$standard_values" "$user_inputs"))
 
@@ -220,8 +221,13 @@ interpret_arch(){ # -path_file : | -no_tab
 	local destiny=${values[1]}
 	local space=${values[2]}
 	local relative=${values[3]}
+	local make=${values[4]}
+	local log=${values[5]}
 	local i
 	local j
+	if [[ $log = 1 ]];then
+		log="interpret_arch.txt"
+	fi
 
 	if [ ! -e $path_file ] || [ ! -e $destiny ] || [ -d $path_file ] || [ -f $destiny ];then
 		echo "Insert a valid path"
@@ -229,39 +235,81 @@ interpret_arch(){ # -path_file : | -no_tab
 	fi
 	
 	switch_path "-path=$destiny"
+	if [ -e $log ];then
+		rm $log
+	fi
+	touch $log
 	if [[ $relative = 1 ]];then
 		destiny="."
 	fi
 	local arch="$(cat $path_file | cat -A | sed 's/\^I/@/g')"
 	local prev=("$destiny")
+	local paths_useds=()
 	for i in ${arch[@]};do
 		i=${i::-1}
-		local depth_level=$(echo "$i" | grep -o "@" | wc -l)
 		local dir_name=${i##*@}
-		local make_var="PATH_${dir_name^^}"
+		local var_name="PATH_${dir_name^^}"
+		local del_cont=$(echo "$i" | grep -o "@" | wc -l)
 
-		local path_curr=${prev[0]}
-		for j in `seq 1 $depth_level`;do
-			path_curr="$path_curr/${prev[$j]}"
+		local dir_path=${prev[0]}
+		for j in `seq 1 $del_cont`;do
+			dir_path="$dir_path/${prev[$j]}"
 		done
-		path_curr="$path_curr/$dir_name"
+		dir_path="$dir_path/$dir_name"
+		prev=($(echo $dir_path | tr "/" "\n"))
 
-		if [ ! -z "$(eval "echo \$$make_var")" ];then
-			local value_make_var=$(eval "echo \$$make_var")
-			local new_var="$make_var""_$(dirname ${value_make_var#.} | tr "/" "\n" | cut -c1-2 | sed ':a;N;$!ba;s/\n//g' | tr 'a-z' 'A-Z')=$value_make_var"
-			make_var="$make_var""_$(dirname ${path_curr#.} | tr "/" "\n" | cut -c1-2 | sed ':a;N;$!ba;s/\n//g' | tr 'a-z' 'A-Z')"
-
-			eval "$new_var"
-			# echo "-$make_var"
-			# echo "-$new_var"
+		# echo "$var_name=$dir_path"
+		if [[ " ${paths_used[@]} " =~ [[:space:]]$dir_path[[:space:]] ]];then
+			continue
 		fi
-		make_var="$make_var=$path_curr"
-		eval "$make_var"
-		echo $make_var
+		paths_used+=(${dir_path})
+		if [[ $log != "0" ]];then
+			echo "$var_name=$dir_path/" >> $log
+		fi
 		#
-		# echo $path_curr
-		prev=($(echo $path_curr | tr "/" "\n"))
 	done
+	while read -r line && [[ $log != "0" ]];do
+		local var_name="${line%=*}"
+		local var_cont=="${line#*=}"
+		local var_amount=$(grep -wo $var_name $log | wc -l)
+		if [[ $var_amount -lt 2 ]];then
+			continue
+		fi
+		local vars_content=($(grep -w $var_name $log | sed -n 's/.*=//p'))
+		local vars_content_rev=()
+		for i in ${vars_content[@]};do
+			vars_content_rev+=($(echo $i | tr '/' '\n' | tac | tr '\n' '/'| cut -d'/' -f3-))
+		done
+		# echo "****"
+		# echo "vars_content=${vars_content_rev[@]}"
+		local index=1
+		local treated_names=()
+		while [[ ${#treated_names[@]} -lt ${#vars_content[@]} ]];do
+			local dirs_names=($(echo ${vars_content_rev[@]} | tr ' ' '\n' | cut -d'/' -f1-$index))
+			# echo "dirs_names=${dirs_names[@]}"
+			for i in ${!dirs_names[@]};do
+				local curr_item_rev=${vars_content_rev[$i]}
+				local curr_item=${vars_content[$i]}
+				 # echo "rev:$curr_item_rev"
+				if [[ $curr_item_rev = "./" ]];then
+					treated_names+=("./")
+					continue
+				fi
+				if [[ $(echo "${dirs_names[@]}" | grep -o ${dirs_names[$i]} | wc -l) -gt 1 ]] || [[ " ${treated_names[@]} " =~ [[:space:]]$curr_item_rev[[:space:]] ]];then
+					continue
+				fi
+				local new_var_name="${var_name}__$(echo $curr_item_rev | cut -d'/' -f-$index | tr '/' '_' | tr '[:lower:]' '[:upper:]')"
+				local new_var="${new_var_name}=$curr_item"
+				# echo "$new_var"
+				sed -i 's|.*'$curr_item'|'$new_var'|' $log
+				treated_names+=($curr_item_rev)
+			done
+			index=$(($index+1))
+			# echo "treated_names=${treated_names[@]}"
+		done
+		break
+	done < $log
+	#
 	resume_path
 }
 interpret_arch "$@"
