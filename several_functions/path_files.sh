@@ -213,7 +213,70 @@ get_arch_dir(){ # -path : Path to directory | -type : The type file wish
 	echo "$arch"
 }
 
-interpret_arch(){ # - : | -no_tab
+format_log_file_inter_arch(){ # log_file: | sort_by: 
+	local log_file="$1"
+	local sort_by="$2"
+	local i
+	if [[ $log_file = "0" ]];then
+		return
+	fi
+	#
+	while read -r line;do
+		local var_name="${line%=*}"
+		local var_cont=="${line#*=}"
+		local var_amount=$(grep -wo $var_name $log_file | wc -l)
+		if [[ $var_amount -lt 2 ]];then
+			continue
+		fi
+		local vars_content=($(grep -w $var_name $log_file | sed -n 's/.*=//p'))
+		local vars_content_rev=()
+		for i in ${vars_content[@]};do
+			vars_content_rev+=($(echo $i | tr '/' '\n' | tac | tr '\n' '/'| cut -d'/' -f3-))
+		done
+		# echo "****"
+		# echo "vars_content=${vars_content_rev[@]}"
+		local index=1
+		local treated_names=()
+		while [[ ${#treated_names[@]} -lt ${#vars_content[@]} ]];do
+			local dirs_names=($(echo ${vars_content_rev[@]} | tr ' ' '\n' | cut -d'/' -f1-$index))
+			# echo "dirs_names=${dirs_names[@]}"
+			for i in ${!dirs_names[@]};do
+				local curr_item_rev=${vars_content_rev[$i]}
+				local curr_item=${vars_content[$i]}
+				 # echo "rev:$curr_item_rev"
+				if [[ $curr_item_rev = "./" ]];then
+					treated_names+=("./")
+					continue
+				fi
+				if [[ $(echo "${dirs_names[@]}" | grep -o ${dirs_names[$i]} | wc -l) -gt 1 ]] || [[ " ${treated_names[@]} " =~ [[:space:]]$curr_item_rev[[:space:]] ]];then
+					continue
+				fi
+				local new_var_name="${var_name}__$(echo $curr_item_rev | cut -d'/' -f-$index | tr '/' '_' | tr '[:lower:]' '[:upper:]')"
+				local new_var="${new_var_name}=$curr_item"
+				# echo "$new_var"
+				sed -i 's|.*'$curr_item'$|'$new_var'|' $log_file
+				# echo "======"
+				treated_names+=($curr_item_rev)
+			done
+			index=$(($index+1))
+			# echo "treated_names=${treated_names[@]}"
+		done
+	done < $log_file
+	if [[ $sort_by = "name" ]];then
+		echo "$(cat $log_file | sort )" > $log_file
+	elif [[ $sort_by = "path" ]];then
+		echo "$(cat $log_file | sort -t= -k2 )" > $log_file
+	fi
+	local biggest_len_word=0
+	for i in $(cat $log_file);do
+		local word=${i%=*}
+		if [[ ${#word} -gt $biggest_len_word ]];then
+			biggest_len_word=${#word}
+		fi
+	done
+	echo "$(awk -F= '{ printf "%-'$biggest_len_word's = %s\n", $1, $2}' $log_file)" > $log_file
+}
+interpret_arch(){
 	local standard_values="-local -destiny=. -no_tab -relative -make -log -sort"
 	local user_inputs="$@"
 	local values=($(interpret_options "$standard_values" "$user_inputs"))
@@ -231,7 +294,7 @@ interpret_arch(){ # - : | -no_tab
 		log="interpret_arch.txt"
 	fi
 	if [[ $sort_log = 1 ]];then
-		sort_log="name"
+		sort_log="path"
 	fi
 
 	if [ ! -e $path_file ] || [ ! -e $destiny ] || [ -d $path_file ] || [ -f $destiny ];then
@@ -239,6 +302,7 @@ interpret_arch(){ # - : | -no_tab
 		return
 	fi
 	
+	local arch="$(cat $path_file | cat -A | sed 's/\^I/@/g')"
 	switch_path "-path=$destiny"
 	if [ -e $log ];then
 		rm $log
@@ -247,7 +311,6 @@ interpret_arch(){ # - : | -no_tab
 	if [[ $relative = 1 ]];then
 		destiny="."
 	fi
-	local arch="$(cat $path_file | cat -A | sed 's/\^I/@/g')"
 	local prev=("$destiny")
 	local paths_useds=()
 	for i in ${arch[@]};do
@@ -268,57 +331,15 @@ interpret_arch(){ # - : | -no_tab
 		fi
 		# echo "$var_name=$dir_path"
 		paths_used+=(${dir_path})
+		#
 		if [[ $log != "0" ]];then
 			echo "$var_name=$dir_path/" >> $log
 		fi
-		#
-	done
-	while read -r line && [[ $log != "0" ]];do
-		local var_name="${line%=*}"
-		local var_cont=="${line#*=}"
-		local var_amount=$(grep -wo $var_name $log | wc -l)
-		if [[ $var_amount -lt 2 ]];then
-			continue
+		if [[ $make != "0" ]];then
+			mkdir -p $dir_path
 		fi
-		local vars_content=($(grep -w $var_name $log | sed -n 's/.*=//p'))
-		local vars_content_rev=()
-		for i in ${vars_content[@]};do
-			vars_content_rev+=($(echo $i | tr '/' '\n' | tac | tr '\n' '/'| cut -d'/' -f3-))
-		done
-		# echo "****"
-		echo "vars_content=${vars_content_rev[@]}"
-		local index=1
-		local treated_names=()
-		while [[ ${#treated_names[@]} -lt ${#vars_content[@]} ]];do
-			local dirs_names=($(echo ${vars_content_rev[@]} | tr ' ' '\n' | cut -d'/' -f1-$index))
-			# echo "dirs_names=${dirs_names[@]}"
-			for i in ${!dirs_names[@]};do
-				local curr_item_rev=${vars_content_rev[$i]}
-				local curr_item=${vars_content[$i]}
-				 # echo "rev:$curr_item_rev"
-				if [[ $curr_item_rev = "./" ]];then
-					treated_names+=("./")
-					continue
-				fi
-				if [[ $(echo "${dirs_names[@]}" | grep -o ${dirs_names[$i]} | wc -l) -gt 1 ]] || [[ " ${treated_names[@]} " =~ [[:space:]]$curr_item_rev[[:space:]] ]];then
-					continue
-				fi
-				local new_var_name="${var_name}__$(echo $curr_item_rev | cut -d'/' -f-$index | tr '/' '_' | tr '[:lower:]' '[:upper:]')"
-				local new_var="${new_var_name}=$curr_item"
-				echo "$new_var"
-				sed -i 's|.*'$curr_item'$|'$new_var'|' $log
-				echo "======"
-				treated_names+=($curr_item_rev)
-			done
-			index=$(($index+1))
-			# echo "treated_names=${treated_names[@]}"
-		done
-	done < $log
-	if [[ $sort_log = "name" ]];then
-		echo "$(cat $log | sort )" > $log
-	elif [[ $sort_log = "path" ]];then
-		echo "$(cat $log | sort -t= -k2 )" > $log
-	fi
+	done
+	format_log_file_inter_arch "$log" "$sort_log"
 	#
 	resume_path
 }
