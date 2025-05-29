@@ -1,4 +1,6 @@
 *
 !*/
+# Extensios files allow
 !.gitignore
 !*.sh
+!*.[0-9]
