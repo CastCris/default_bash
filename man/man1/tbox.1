@@ -1,15 +1,113 @@
 .ds q \N'34'
-.TH
-.ce
-Tangerine Box
+.TH TBOX 1 29/05/25 TBOX_ALPHA General Commands
+.SH "NAME"
+.B tbox - Tangerine Box
+\"
+.SH "SYNOPSIS"
+.sp
+.nf
+\fBtbox -R\fR [[\fIexec options\fR] <\fIcommands\fR> ...]
+\fBtbox -E\fR [\fIedit options\fR] [\fIeditor_flags\fR] <\fIfile\fR> ...
+\fBtbox -Q\fR [\fIquery options\fR]
 
-.SH OPA
-.I QWERTYUIOP
+\"Tangerine Flags
+\"-R -r|--record -extern --exit -o -E --env -Q --list -f --format_output
+.fi
+\"
+.SH "DESCRIPTION"
 .PP
-Ola gente, eu sou rogerio
-.TP 2
-.B Aquele que te comeu atras do armario
-SakjakjsaSAKLsaKSLAKslaksalKSLKASLAKSK
-.SH Silvaoooo
+The tbox command is the pratical way of execute and debug any command in
+Tangerine Box project and manage it. For the user usage, can be usefull use
+the tbox for a fast query and access of a singular or many command once.
+Now, if we are talk about the develop, can be usefull use the tbox command for
+rapailly find and edit the source/manual command.
+
+Overall, the Tangerine box is a diverse library, a true box of, not only,
+tangerine, small insects, cell, molecule, atoms, quarks ... Well, many
+useless things for someones and some usefull thing for others, depend of
+situation!
+
+.SH "OVERVIEW"
 .PP
-O para e pop
+No much for say here..
+
+.SH "OPTIONS"
+.SS "General options"
+\"
+.PP
+\fB\-R\fR
+.RS 4
+The flag '\-R' say for tbox, "hey man, I wanna execute some commands!".
+For each command, the tbox engine seaches in the directory "commands" for the
+command name.
+If tbox find the command, he uses the value of flag \-\-extern,
+by default is bash, for execute the command whether it's not compiled.
+Else, the tbox just displays a message error and continue with perform.
+.RE
+\"
+.PP
+\fB\-E\fR
+.RS 4
+For developers of project(just me so now..),
+the \-E option is loveliness when we talk about develop the Tangerine Box.
+Well, I don't a senior nor full-stack developer, so it's "ok" some erros here
+and there, consequently we need a fast and effective way of open,
+close and modify files,
+don't matter the situation and environment.
+
+The \-E flag do the tbox command undestand that all head of \-E is for the
+develop usage, thus tbox enable the develop options,
+which can change the default editor text, vim, and
+can pass the editor opions using the flag \-\-editor-flags.
+.RE
+\"
+.PP
+\fB-Q\fR
+.RS 4
+For both, user and developer, the query operation, shown by option \-Q,
+is effective way for search and agrouping commands by your class, informations,
+names and locale, beyond of regex.
+Every option after the \-Q flag must are listed in subsection of this manu, called
+"Query options".
+.RE
+.SS "Exec options"
+\"
+.PP
+\fB\-\-extern=\fR\fIinterpret\fR
+.RS 4
+Define a new interpret for execute the commands doesn't compiled forward.
+Put this if the the command source isn't a executable file and
+doesn't wirte in shellscript language.
+Ensure that, if file is executable, is authorized for run.
+
+By default, the option value is bash.
+.RE
+\"
+.PP
+\fB\-\-exit\fR
+.RS 4
+Display the exit of each command in numerical format.
+Each exit is repective of compile and interpret used for execute the file.
+.RE
+\"
+.PP
+\fB\-o, \-\-output\fR
+.RS 4
+Display the raw output of each command.
+.RE
+\"
+.PP
+\fB\-d,\-\-debug=\fIfile\fB\fR
+.RS 4
+By default, all errors ignored.
+Enable the debug, each erros it's displayed in terminal.
+If debug get any value, using the \-\-debug=\fIfile\fR,
+this value is used for naming a record file of erros.
+By default, the value is log_erros_<\fIcommand_name\fR>.txt
+.RE
+.SS "Edit options"
+\"
+.PP
+\fB\-\-editor=\fIeditor_name\fI
+.RS 4
+
