@@ -1,5 +1,5 @@
 .ds q \N'34'
-.TH TBOX 1 31/05/25 TBOX_ALPHA General Commands
+.TH TBOX 1 01/06/25 TBOX_ALPHA General Commands
 .SH "NAME"
 .B tbox - Tangerine Box
 \"
@@ -8,7 +8,7 @@
 .nf
 \fBtbox -R\fR [[\fIexec options\fR] <\fIcommands\fR> ...]
 \fBtbox -E\fR [\fIedit options\fR] [\fIeditor_flags\fR] <\fIfile\fR> ...
-\fBtbox -Q\fR [\fIquery options\fR]
+\fBtbox -Q\fR [\fIquery options\fR] [<\fIregex\fR>]
 
 \"Tangerine Flags
 \"-R -r|--record -extern --exit -o -E --env -Q --list -f --format_output
@@ -16,10 +16,10 @@
 \"
 .SH "DESCRIPTION"
 .PP
-The tbox command is the pratical way of execute and debug any command in
-Tangerine Box project and manage it. For the user usage, can be usefull use
+The tbox command is a pratical way of mange, execute and debug any command
+in Tangerine Box project. For the user usage, can be usefull use
 the tbox for a fast query and access of a singular or many command once.
-Now, if we are talk about the develop, can be usefull use the tbox command for
+Now, if we are talk about the developer usage, can be usefull use the tbox command for
 rapailly find and edit the source/manual command.
 
 Overall, the Tangerine box is a diverse library, a true box of, not only,
@@ -37,7 +37,7 @@ No much for say here..
 .PP
 \fB\-R\fR
 .RS 4
-The flag '\-R' say for tbox, "hey man, I wanna execute some commands!".
+The flag '\-R' say for tbox: "hey man, I wanna execute some commands!".
 For each command, the tbox engine seaches in the directory "commands" for the
 command name.
 If tbox find the command, he uses the value of flag \-\-extern,
@@ -57,8 +57,12 @@ don't matter the situation and environment.
 
 The \-E flag do the tbox command undestand that all head of \-E is for the
 develop usage, thus tbox enable the develop options,
-which can change the default editor text, vim, and
-can pass the editor opions using the flag \-\-editor-flags.
+which can change the default editor text, vim, and or 
+pass the editor options. Each passed file will searched in the all project.
+
+For example, we can type:
+\fBtbox \-E \-\-editor_flags -p -T xterm +10 -- my_file1 my_file2\fR,
+For open all follow files in apart tabs, in terminal ... and in line 10.
 .RE
 \"
 .PP
@@ -67,8 +71,8 @@ can pass the editor opions using the flag \-\-editor-flags.
 For both, user and developer, the query operation, shown by option \-Q,
 is effective way for search and agrouping commands by your class, informations,
 names and locale, beyond of regex.
-Every option after the \-Q flag must are listed in subsection of this manu, called
-"Query options".
+Every options, after the \-Q, produces a output, can be filter using the
+regex after the options or by pipeline.
 .RE
 .SS "Exec options"
 \"
@@ -100,6 +104,7 @@ Display the raw output of each command.
 \fB\-d,\-\-debug=\fIfile\fB\fR
 .RS 4
 By default, all errors ignored.
+
 Enable the debug, each erros it's displayed in terminal.
 If debug get any value, using the \-\-debug=\fIfile\fR,
 this value is used for naming a record file of erros.
@@ -110,4 +115,29 @@ By default, the value is log_erros_<\fIcommand_name\fR>.txt
 .PP
 \fB\-\-editor=\fIeditor_name\fI
 .RS 4
+For standard, the editor is vim.
 
+Use the \-\-editor for change the editor used for open and edit the files,
+assure the editor is in your PATH, otherwise,
+put the path of the editor executable.
+.RE
+\"
+.PP
+\fB\-\-editor\-flag=\fIeditor options\fR
+.RS 4
+For adverse situations,
+pass the editor options after the \-\-editor\-flag option.
+When finish the typing of flags, use the \-\- flag for do the tbox undestand
+that the section flags ended.
+.RE
+\"
+.SS Options flags
+.PP
+\fB\-\-list\fR
+.RS 4
+List all able commands,
+displaying too it paths and a short description about it.
+.RE
+
+\" This file is a reference for tbox command (which doesn't exist yet),
+\" so it is susceotuble to modify.
